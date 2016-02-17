@@ -1,16 +1,20 @@
 import time
 import sys
 import re
-import pdb,math
+import pdb
+import math
 import os
 import os.path
 
 
 def run_cmd(s1):
-    print(s1); os.system(s1) 
+    print(s1)
+    os.system(s1)
+
 
 class Counter():
     '''Used for printing the number of kmers processed'''
+
     def __init__(self, name, report_length):
         self.name = name
         self.count = 0
@@ -20,6 +24,7 @@ class Counter():
         self.count += 1
         if self.count % self.report_length == 0:
             print "{:s}: {:s}, processed {:d}".format(time.asctime(), self.name, self.count)
+
 
 def reverse_complement(bases):
     """Return the reverse complement of BASES. Assumes BASES is
@@ -33,89 +38,133 @@ def reverse_complement(bases):
         bases = re.sub(ch1, ch2, bases)
     return bases[::-1].upper()
 
-def kmers_for_component(kmer_directory, reads_files, directory_name, contig_file_extension, new_kmer_tag, graph_file_extension, get_og_comp_kmers, get_partition_kmers, double_stranded, paired_end = False, second_iteration = False,  partition_size = 500, overload = 1.5, K = 24, gpmetis_path = 'gpmetis'):
-    """This fuction runs gpmetis on the components above a threshold size.  It then creates a dictionary called 
+
+def kmers_for_component(
+        kmer_directory,
+        reads_files,
+        directory_name,
+        contig_file_extension,
+        new_kmer_tag,
+        graph_file_extension,
+        get_og_comp_kmers,
+        get_partition_kmers,
+        double_stranded,
+        paired_end=False,
+        second_iteration=False,
+        partition_size=500,
+        overload=1.5,
+        K=24,
+        gpmetis_path='gpmetis'):
+    """This fuction runs gpmetis on the components above a threshold size.  It then creates a dictionary called
     k1mers2component {k1mer : component}.  It then sends any reads that share a kmer with a component to that component.
     It then cycles through the k1mer file and outputs the k1mers along with their weights to a file for each component.
-    It then creates a kmers2component dictionary.  It then outputs a kmers file for each component. 
+    It then creates a kmers2component dictionary.  It then outputs a kmers file for each component.
     """
-    
-    
-    if os.path.exists(directory_name+"/before_sp_log.txt"):
-        f_log = open(directory_name+"/before_sp_log.txt", 'a')
+
+    if os.path.exists(directory_name + "/before_sp_log.txt"):
+        f_log = open(directory_name + "/before_sp_log.txt", 'a')
     else:
-        f_log = open(directory_name+"/before_sp_log.txt", 'w')
-    
+        f_log = open(directory_name + "/before_sp_log.txt", 'w')
+
     def write_log(s):
-	f_log.write(s + "\n"); print(s)
-    
+        f_log.write(s + "\n")
+        print(s)
+
     # Counts number of components above size threshold
     Num_Components = 0
     i = 1
-    while os.path.exists(directory_name+"/component" + str(i) + "contigs.txt"):
+    while os.path.exists(
+            directory_name +
+            "/component" +
+            str(i) +
+            "contigs.txt"):
         i += 1
-        Num_Components += 1  
+        Num_Components += 1
 
     # Counts number of components below size threshold
     Num_Remaining_Components = 0
     i = 1
-    while os.path.exists(directory_name+"/remaining_contigs" + str(i) + ".txt"):
+    while os.path.exists(
+            directory_name +
+            "/remaining_contigs" +
+            str(i) +
+            ".txt"):
         i += 1
-        Num_Remaining_Components += 1   
-       
+        Num_Remaining_Components += 1
+
     if get_partition_kmers:
-        ufactor = int(1000.0*overload - 1000.0)
+        ufactor = int(1000.0 * overload - 1000.0)
         components_broken = {}
         temp_string = ""
-        
+
         # Runs gpmetis
         for i in range(Num_Components):
-            with open(directory_name+"/component" + str(i+1) + contig_file_extension , 'r') as f:
+            with open(directory_name + "/component" + str(i + 1) + contig_file_extension, 'r') as f:
                 lines = f.readlines()
                 num_contigs = len(lines)
-                Partitions = min(int(math.ceil(float(num_contigs)/float(partition_size))),100)
-                temp_string += "Component " + str(i) + ": " + str(Partitions) + " partitions, "  
+                Partitions = min(
+                    int(math.ceil(float(num_contigs) / float(partition_size))), 100)
+                temp_string += "Component " + \
+                    str(i) + ": " + str(Partitions) + " partitions, "
                 if len(lines) >= 2:
                     if ufactor == 0:
                         #print("gpmetis " +directory_name+"/component" + str(i+1) + graph_file_extension + " " + str(Partitions))
-                        run_cmd(gpmetis_path +directory_name+"/component" + str(i+1) +  graph_file_extension + " " + str(Partitions) )
+                        run_cmd(gpmetis_path +
+                                directory_name +
+                                "/component" +
+                                str(i +
+                                    1) +
+                                graph_file_extension +
+                                " " +
+                                str(Partitions))
                         components_broken[i] = Partitions
                     elif ufactor > 0:
                         #print("gpmetis " + " -ufactor="+str(ufactor) + " "+directory_name+"/component" + str(i+1) + graph_file_extension + " " + str(Partitions))
-                        run_cmd(gpmetis_path + " -ufactor="+str(ufactor) + " "+directory_name+"/component" + str(i+1) + graph_file_extension + " " +str(Partitions))
-                        components_broken[i] = Partitions          
-        
-        write_log(str(time.asctime()) + ": " + "gpmetis for partitioning " + str(int(second_iteration)+1) + " is complete -- " + temp_string)
-        
+                        run_cmd(gpmetis_path +
+                                " -ufactor=" +
+                                str(ufactor) +
+                                " " +
+                                directory_name +
+                                "/component" +
+                                str(i +
+                                    1) +
+                                graph_file_extension +
+                                " " +
+                                str(Partitions))
+                        components_broken[i] = Partitions
+
+        write_log(str(time.asctime()) + ": " + "gpmetis for partitioning " +
+                  str(int(second_iteration) + 1) + " is complete -- " + temp_string)
+
         new_components = {}
         k1mers2component = {}
-        
+
         # Builds k1mer2component dictionary
         for i in components_broken:
-            with open(directory_name+"/component" + str(i+1) + contig_file_extension, 'r') as f_contigs:
-                with open(directory_name+"/component" + str(i+1) + graph_file_extension + ".part." + str(components_broken[i]) , 'r') as f_component:
+            with open(directory_name + "/component" + str(i + 1) + contig_file_extension, 'r') as f_contigs:
+                with open(directory_name + "/component" + str(i + 1) + graph_file_extension + ".part." + str(components_broken[i]), 'r') as f_component:
                     contig_lines = f_contigs.readlines()
                     j = 0
                     for line in f_component:
                         tokens = line.split()
-                        comp = str(i+1) + "_" + tokens[0]
+                        comp = str(i + 1) + "_" + tokens[0]
                         contig = contig_lines[j].split()[0]
                         if comp not in new_components:
                             new_components[comp] = [contig]
                         else:
                             new_components[comp].append(contig)
-                        for each in range(len(contig)-(K+1) + 1):
-                            k1mers2component[contig[each:each+(K+1)]] = [comp, 0.0]
+                        for each in range(len(contig) - (K + 1) + 1):
+                            k1mers2component[
+                                contig[each:each + (K + 1)]] = [comp, 0.0]
                         j += 1
-                        
-                         
+
         # Adds remaining components to k1mers2component
         if not second_iteration:
             for i in range(Num_Remaining_Components):
-                with open(directory_name+"/remaining_contigs"+str(i+1)+".txt", 'r') as remaining_contigs_file:
+                with open(directory_name + "/remaining_contigs" + str(i + 1) + ".txt", 'r') as remaining_contigs_file:
                     if 1:
                         lines = remaining_contigs_file.readlines()
-                        comp = "remaining"+str(i+1)
+                        comp = "remaining" + str(i + 1)
                         j = 0
                         for line in lines:
                             tokens = line.split()
@@ -124,24 +173,25 @@ def kmers_for_component(kmer_directory, reads_files, directory_name, contig_file
                                 new_components[comp] = [contig]
                             else:
                                 new_components[comp].append(contig)
-                            for each in range(len(contig)-(K+1) + 1):
-                                k1mers2component[contig[each:each+(K+1)]] = [comp, 0.0]
-                            j += 1                             
+                            for each in range(len(contig) - (K + 1) + 1):
+                                k1mers2component[
+                                    contig[each:each + (K + 1)]] = [comp, 0.0]
+                            j += 1
 
-        write_log(str(time.asctime()) + ": " + "k1mers2component dictionary created ")
-
-                            
+        write_log(str(time.asctime()) + ": " +
+                  "k1mers2component dictionary created ")
 
         iter_tag = "_c"
         if second_iteration:
             iter_tag = "_r2_c"
-        read_line =''
-        
+        read_line = ''
+
         # Assigns reads to components in the non paired end case
-        if paired_end == False:  
-            read_part_file = {}   
+        if not paired_end:
+            read_part_file = {}
             for comp in new_components:
-                read_part_file[comp] = open(directory_name+"/reads"+iter_tag+str(comp)+".fasta", 'w')
+                read_part_file[comp] = open(
+                    directory_name + "/reads" + iter_tag + str(comp) + ".fasta", 'w')
             with open(reads_files[0]) as readfile:
                 for line in readfile:
                     if line.split()[0][0] == ">":
@@ -150,8 +200,8 @@ def kmers_for_component(kmer_directory, reads_files, directory_name, contig_file
                         read = line.split()[0]
                         i = 0
                         assigned_comp = set()
-                        while i < len(read) - (K+1):
-                            k1mer = read[i:i+(K+1)]
+                        while i < len(read) - (K + 1):
+                            k1mer = read[i:i + (K + 1)]
                             if k1mer in k1mers2component:
                                 assigned_comp.add(k1mers2component[k1mer][0])
                             i += K
@@ -162,43 +212,48 @@ def kmers_for_component(kmer_directory, reads_files, directory_name, contig_file
                             read_part_file[each_comp].write(read_line)
                             read_part_file[each_comp].write(line)
 
-                            
                         assigned_comp = set()
                         if double_stranded:
                             rc_read = reverse_complement(read)
                             i = 0
-                            while i < len(rc_read) - (K+1):
-                                k1mer = rc_read[i:i+(K+1)]
+                            while i < len(rc_read) - (K + 1):
+                                k1mer = rc_read[i:i + (K + 1)]
                                 if k1mer in k1mers2component:
-                                    assigned_comp.add(k1mers2component[k1mer][0])
+                                    assigned_comp.add(
+                                        k1mers2component[k1mer][0])
                                 i += K
-                                
+
                             k1mer = rc_read[-K:]
                             if k1mer in k1mers2component:
                                 assigned_comp.add(k1mers2component[k1mer][0])
                             for each_comp in assigned_comp:
-                                reversed_read_name=read_line.split()[0]+'_reversed'+'\t' +'\t'.join(read_line.split()[1:])
-                                
-                                read_part_file[each_comp].write(reversed_read_name+'\n')
-                                read_part_file[each_comp].write(rc_read+'\n')                            
+                                reversed_read_name = read_line.split(
+                                )[0] + '_reversed' + '\t' + '\t'.join(read_line.split()[1:])
+
+                                read_part_file[each_comp].write(
+                                    reversed_read_name + '\n')
+                                read_part_file[each_comp].write(rc_read + '\n')
             for comp in new_components:
                 read_part_file[comp].close()
 
         # Assigns reads to components in the paired end case
-        elif paired_end == True:
+        elif paired_end:
             read1_part_file = {}
             read2_part_file = {}
             for comp in new_components:
-                read1_part_file[comp] = open(directory_name+"/reads"+iter_tag+str(comp)+"_1.fasta", 'w')
-                read2_part_file[comp] = open(directory_name+"/reads"+iter_tag+str(comp)+"_2.fasta", 'w')
+                read1_part_file[comp] = open(
+                    directory_name + "/reads" + iter_tag + str(comp) + "_1.fasta", 'w')
+                read2_part_file[comp] = open(
+                    directory_name + "/reads" + iter_tag + str(comp) + "_2.fasta", 'w')
             comp2reads = {}
 
             comp2reads_reversed = {}
             readfile1 = open(reads_files[0], 'r')
             readfile2 = open(reads_files[1], 'r')
-            read_line1 = ''; read_line2 = ''
+            read_line1 = ''
+            read_line2 = ''
             with open(reads_files[0]) as readfile1, open(reads_files[1]) as readfile2:
-                for line1,line2 in zip(readfile1,readfile2):
+                for line1, line2 in zip(readfile1, readfile2):
                     if line1.split()[0][0] == ">":
                         assert line2.split()[0][0] == ">"
                         read_line1 = line1
@@ -210,23 +265,23 @@ def kmers_for_component(kmer_directory, reads_files, directory_name, contig_file
                         read1_reversed = reverse_complement(read1)
                         read2_reversed = reverse_complement(read2)
                         assigned_comp = set()
-                        i=0
-                        #First process (read1, read2_reversed)
-                        while i < len(read1) - (K+1):
-                            k1mer = read1[i:i+(K+1)]
+                        i = 0
+                        # First process (read1, read2_reversed)
+                        while i < len(read1) - (K + 1):
+                            k1mer = read1[i:i + (K + 1)]
                             if k1mer in k1mers2component:
                                 assigned_comp.add(k1mers2component[k1mer][0])
-                            i+=K
-                        k1mer = read1[-K:]    
+                            i += K
+                        k1mer = read1[-K:]
                         if k1mer in k1mers2component:
                             assigned_comp.add(k1mers2component[k1mer][0])
-                        i=0
-                        while i < len(read2_reversed) - (K+1):
-                            k1mer = read2_reversed[i:i+(K+1)]
+                        i = 0
+                        while i < len(read2_reversed) - (K + 1):
+                            k1mer = read2_reversed[i:i + (K + 1)]
                             if k1mer in k1mers2component:
                                 assigned_comp.add(k1mers2component[k1mer][0])
-                            i+=K
-                        k1mer = read2_reversed[-K:]    
+                            i += K
+                        k1mer = read2_reversed[-K:]
                         if k1mer in k1mers2component:
                             assigned_comp.add(k1mers2component[k1mer][0])
 
@@ -238,44 +293,54 @@ def kmers_for_component(kmer_directory, reads_files, directory_name, contig_file
 
                         if double_stranded:
                             assigned_comp = set()
-                            #Now process (read1_reversed, read2)
-                            i=0
-                            while i < len(read1_reversed) - (K+1):
-                                k1mer = read1_reversed[i:i+(K+1)]
+                            # Now process (read1_reversed, read2)
+                            i = 0
+                            while i < len(read1_reversed) - (K + 1):
+                                k1mer = read1_reversed[i:i + (K + 1)]
                                 if k1mer in k1mers2component:
-                                    assigned_comp.add(k1mers2component[k1mer][0])
-                                i+=K
-                            k1mer = read1_reversed[-K:]    
+                                    assigned_comp.add(
+                                        k1mers2component[k1mer][0])
+                                i += K
+                            k1mer = read1_reversed[-K:]
                             if k1mer in k1mers2component:
                                 assigned_comp.add(k1mers2component[k1mer][0])
-                            i=0
-                            while i < len(read2) - (K+1):
-                                k1mer = read2[i:i+(K+1)]
+                            i = 0
+                            while i < len(read2) - (K + 1):
+                                k1mer = read2[i:i + (K + 1)]
                                 if k1mer in k1mers2component:
-                                    assigned_comp.add(k1mers2component[k1mer][0])
-                                i+=K
-                            k1mer = read2[-K:]    
+                                    assigned_comp.add(
+                                        k1mers2component[k1mer][0])
+                                i += K
+                            k1mer = read2[-K:]
                             if k1mer in k1mers2component:
                                 assigned_comp.add(k1mers2component[k1mer][0])
                             for each_comp in assigned_comp:
-                                reversed_read1_name=read_line1.split()[0]+'_reversed'+'\t'+'\t'.join(read_line1.split()[1:])
-                                reversed_read2_name=read_line2.split()[0]+'_reversed'+'\t'+'\t'.join(read_line2.split()[1:])
-                                read1_part_file[each_comp].write(reversed_read1_name+'\n')
-                                read1_part_file[each_comp].write(read1_reversed+'\n')
-                                read2_part_file[each_comp].write(reversed_read2_name+'\n')
-                                read2_part_file[each_comp].write(read2_reversed+'\n')
+                                reversed_read1_name = read_line1.split(
+                                )[0] + '_reversed' + '\t' + '\t'.join(read_line1.split()[1:])
+                                reversed_read2_name = read_line2.split(
+                                )[0] + '_reversed' + '\t' + '\t'.join(read_line2.split()[1:])
+                                read1_part_file[each_comp].write(
+                                    reversed_read1_name + '\n')
+                                read1_part_file[each_comp].write(
+                                    read1_reversed + '\n')
+                                read2_part_file[each_comp].write(
+                                    reversed_read2_name + '\n')
+                                read2_part_file[each_comp].write(
+                                    read2_reversed + '\n')
             for comp in new_components:
                 read1_part_file[comp].close()
                 read2_part_file[comp].close()
-        
-        write_log(str(time.asctime()) + ": " + "reads partititoned ")        
-        
+
+        write_log(str(time.asctime()) + ": " + "reads partititoned ")
+
         c2 = Counter("k1mer Streaming", 10**6)
 
-        # Cycles through k1mer file and adds k1mer weights to k1mers2component dictionary
-        with open(kmer_directory + "/k1mer.dict" , 'r') as f:
+        # Cycles through k1mer file and adds k1mer weights to k1mers2component
+        # dictionary
+        with open(kmer_directory + "/k1mer.dict", 'r') as f:
             for line in f:
-                if len(line) == 0: continue
+                if len(line) == 0:
+                    continue
                 c2.increment()
                 k1mer, weight = line.split()
                 k1mer = k1mer.upper()
@@ -287,63 +352,64 @@ def kmers_for_component(kmer_directory, reads_files, directory_name, contig_file
                     if r_k1mer in k1mers2component:
                         k1mers2component[r_k1mer][1] += weight
 
-        write_log(str(time.asctime()) + ": " + "k1mers weights stored in dictionary")
+        write_log(str(time.asctime()) + ": " +
+                  "k1mers weights stored in dictionary")
 
-        
         # Writes out k1mers with weights for each partition
         for comp in new_components:
-            with open(directory_name+"/component" + comp +  new_kmer_tag + "k1mers_allowed.dict" , 'w') as new_file:
+            with open(directory_name + "/component" + comp + new_kmer_tag + "k1mers_allowed.dict", 'w') as new_file:
                 for contig in new_components[comp]:
-                    for i in range(len(contig)-(K+1) + 1):
-                        k1mer = contig[i:i+(K+1)]
-                        new_file.write(k1mer + "\t" + str(k1mers2component[k1mer][1]) + "\n")
+                    for i in range(len(contig) - (K + 1) + 1):
+                        k1mer = contig[i:i + (K + 1)]
+                        new_file.write(
+                            k1mer + "\t" + str(k1mers2component[k1mer][1]) + "\n")
 
         write_log(str(time.asctime()) + ": " + "k1mers written to file ")
-                       
-                        
-            
+
         del(k1mers2component)
-        
+
         kmers2component = {}
-        
+
         # builds kmers2components dictionary that will store kmer weights
         for i in components_broken:
-            with open(directory_name+"/component" + str(i+1) + contig_file_extension, 'r') as f_contigs:
-                with open(directory_name+"/component" + str(i+1) + graph_file_extension + ".part." + str(components_broken[i]) , 'r') as f_component:
+            with open(directory_name + "/component" + str(i + 1) + contig_file_extension, 'r') as f_contigs:
+                with open(directory_name + "/component" + str(i + 1) + graph_file_extension + ".part." + str(components_broken[i]), 'r') as f_component:
                     contig_lines = f_contigs.readlines()
                     j = 0
                     for line in f_component:
                         tokens = line.split()
-                        comp = str(i+1) + "_" + tokens[0]
+                        comp = str(i + 1) + "_" + tokens[0]
                         contig = contig_lines[j].split()[0]
-                        for each in range(len(contig)-(K) + 1):
-                            kmers2component[contig[each:each+(K)]] = 0.0
+                        for each in range(len(contig) - (K) + 1):
+                            kmers2component[contig[each:each + (K)]] = 0.0
                         j += 1
-                        
+
         # adds kmers from remaining components if not second iterarion
         if not second_iteration:
             for i in range(Num_Remaining_Components):
-                with open(directory_name+"/remaining_contigs"+str(i+1)+".txt", 'r') as remaining_contigs_file:
+                with open(directory_name + "/remaining_contigs" + str(i + 1) + ".txt", 'r') as remaining_contigs_file:
                     if 1:
                         lines = remaining_contigs_file.readlines()
-                        comp = "remaining"+str(i+1)
+                        comp = "remaining" + str(i + 1)
 
                         j = 0
                         for line in lines:
                             tokens = line.split()
                             contig = tokens[0]
-                            for each in range(len(contig)-(K) + 1):
-                                kmers2component[contig[each:each+(K)]] = 0.0
-                            j += 1                            
+                            for each in range(len(contig) - (K) + 1):
+                                kmers2component[contig[each:each + (K)]] = 0.0
+                            j += 1
 
-        write_log(str(time.asctime()) + ": " + "kmers2component dictionary created ")
-                            
+        write_log(str(time.asctime()) + ": " +
+                  "kmers2component dictionary created ")
+
         c2 = Counter("kmer Streaming", 10**6)
 
         # gets kmer weights from kmer file and adds them to kmers2component
-        with open(kmer_directory + "/kmer.dict" , 'r') as f:
+        with open(kmer_directory + "/kmer.dict", 'r') as f:
             for line in f:
-                if len(line) == 0: continue
+                if len(line) == 0:
+                    continue
                 c2.increment()
                 kmer, weight = line.split()
                 kmer = kmer.upper()
@@ -355,16 +421,18 @@ def kmers_for_component(kmer_directory, reads_files, directory_name, contig_file
                     if r_kmer in kmers2component:
                         kmers2component[r_kmer] += weight
 
-        write_log(str(time.asctime()) + ": " + "kmers weights stored in dictionary")
-                        
-        # Writes out kmers and weights for each partition          
+        write_log(str(time.asctime()) + ": " +
+                  "kmers weights stored in dictionary")
+
+        # Writes out kmers and weights for each partition
         for comp in new_components:
-            with open(directory_name+"/component" + comp +  new_kmer_tag + "kmers_allowed.dict" , 'w') as new_file:
+            with open(directory_name + "/component" + comp + new_kmer_tag + "kmers_allowed.dict", 'w') as new_file:
                 for contig in new_components[comp]:
-                    for i in range(len(contig)-(K) + 1):
-                        kmer = contig[i:i+(K)]
-                        new_file.write(kmer + "\t" + str(kmers2component[kmer]) + "\n")
+                    for i in range(len(contig) - (K) + 1):
+                        kmer = contig[i:i + (K)]
+                        new_file.write(
+                            kmer + "\t" + str(kmers2component[kmer]) + "\n")
 
         write_log(str(time.asctime()) + ": " + "kmers written to file " + "\n")
-                        
+
         return [components_broken, new_components]

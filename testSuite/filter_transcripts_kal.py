@@ -1,7 +1,8 @@
-import sys, pdb
+import sys
+import pdb
 
 
-def do_all(reconstr_per,fp_file,kal_file):
+def do_all(reconstr_per, fp_file, kal_file):
     # def write_cutoff(cutoff, weights, transcripts, false_positives):
     #     weights = weights[int(0.1*cutoff*len(weights)):]
     #     good_names = set([x[0] for x in weights])
@@ -12,13 +13,12 @@ def do_all(reconstr_per,fp_file,kal_file):
     #             hits += 1
     #     print('{} false positives for {}'.format(hits, cutoff))
     #     util.seqs_to_fasta('drop{}/transcripts.fa'.format(cutoff), transcripts)
-    len_threshold = 200; div = float(20)
+    len_threshold = 200
+    div = float(20)
     cutoff_range = range(int(div))
 
-
-
-    ab_dict  = {}
-    weights = [] 
+    ab_dict = {}
+    weights = []
     with open(kal_file) as f:
         f.readline()
         for line in f:
@@ -28,31 +28,33 @@ def do_all(reconstr_per,fp_file,kal_file):
             weights.append(float(weight))
             ab_dict[name] = float(weight)
     weights.sort()
-    
+
     weight_cutoff = {}
     tr_rec_dict = {}
 
     for cutoff in cutoff_range:
-        weight_cutoff[cutoff] = weights[int(1/div* cutoff*len(weights))]
+        weight_cutoff[cutoff] = weights[int(1 / div * cutoff * len(weights))]
         tr_rec_dict[cutoff] = {}
         # for tr in ab_dict:
         #     tr_rec_dict[cutoff][tr] = 0
 
-
-    f=open(reconstr_per,'r')
+    f = open(reconstr_per, 'r')
     #lines = f.readlines()
     #best_rec_dict = {}
     for line in f:
         '''if i<5:
             continue'''
         tokens = line.split()
-        org = tokens[9]; #need to select for the tokens[9][29:]  when having larger prefix
-        rec = tokens[13]; rec_len = int(tokens[0]); tr_len = int(tokens[10])
-        if rec_len > 0.9*tr_len: 
+        # need to select for the tokens[9][29:]  when having larger prefix
+        org = tokens[9]
+        rec = tokens[13]
+        rec_len = int(tokens[0])
+        tr_len = int(tokens[10])
+        if rec_len > 0.9 * tr_len:
             for cutoff in cutoff_range:
-                if ab_dict.get(rec,0) > weight_cutoff[cutoff]:
-                    #z = best_rec_dict[cutoff][0].get(org,[None,0]);                
-                    #if rec_len>z[1]:
+                if ab_dict.get(rec, 0) > weight_cutoff[cutoff]:
+                    #z = best_rec_dict[cutoff][0].get(org,[None,0]);
+                    # if rec_len>z[1]:
                     #    best_rec_dict[cutoff][org] = [rec,rec_len,tr_len,tr_ab/tr_len];
                     tr_rec_dict[cutoff][org] = 1
 
@@ -60,35 +62,45 @@ def do_all(reconstr_per,fp_file,kal_file):
     for cutoff in cutoff_range:
         recall[cutoff] = sum(tr_rec_dict[cutoff].values())
 
-    
     tot_rec = {}
     fp_rec = {}
     for cutoff in cutoff_range:
         tot_rec[cutoff] = 0
         fp_rec[cutoff] = 0
 
-
     with open(fp_file) as f:
         for line in f:
             name, code, length = line.split()
-            if int(length) < len_threshold: continue
+            if int(length) < len_threshold:
+                continue
             for cutoff in cutoff_range:
-                if ab_dict.get(name,0) >= weight_cutoff[cutoff]:
-                    tot_rec[cutoff] +=1
+                if ab_dict.get(name, 0) >= weight_cutoff[cutoff]:
+                    tot_rec[cutoff] += 1
                     if code == '0':
-                        fp_rec[cutoff] +=1
+                        fp_rec[cutoff] += 1
 
     print("Cutoff\t Recall \t Tot \t FP")
     for cutoff in cutoff_range:
-        print(str(cutoff) + "\t" + str(recall[cutoff]) + "\t" + str(tot_rec[cutoff]) + "\t" + str(fp_rec[cutoff]))
+        print(str(cutoff) +
+              "\t" +
+              str(recall[cutoff]) +
+              "\t" +
+              str(tot_rec[cutoff]) +
+              "\t" +
+              str(fp_rec[cutoff]))
+
 
 def main():
     if len(sys.argv) == 1:
-        arguments = ['', 'reconstr_per.txt', 'reconstructed_fp.log', 'abundance.kal']
+        arguments = [
+            '',
+            'reconstr_per.txt',
+            'reconstructed_fp.log',
+            'abundance.kal']
     else:
         arguments = sys.argv
-    reconstr_per,fp_file,kal_file = arguments[1], arguments[2],arguments[3] 
-    do_all(reconstr_per,fp_file,kal_file)
+    reconstr_per, fp_file, kal_file = arguments[1], arguments[2], arguments[3]
+    do_all(reconstr_per, fp_file, kal_file)
 
 if __name__ == '__main__':
     main()

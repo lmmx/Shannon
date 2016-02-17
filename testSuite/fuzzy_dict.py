@@ -1,5 +1,6 @@
 import doctest
 
+
 class FuzzyDict(object):
     """A dictionary that matches strings with a certain
     tolerance. That is, string keys map to objects, but
@@ -34,8 +35,8 @@ class FuzzyDict(object):
     >>> sorted(f['ABCD'])
     [2, 3, 4]
     """
-    TOLERANCE = 2 #Tolerance in key searching
-    PARTS = 3 #Number of parts to split each key into
+    TOLERANCE = 2  # Tolerance in key searching
+    PARTS = 3  # Number of parts to split each key into
 
     def __init__(self):
         self.part_dicts = []
@@ -62,7 +63,7 @@ class FuzzyDict(object):
 
     def __contains__(self, key):
         return len(self.__getitem__(key)) > 0
-        
+
     def matches(self, key1, key2):
         if len(key1) != len(key2):
             return False
@@ -75,10 +76,10 @@ class FuzzyDict(object):
         return True
 
     def part(self, p, key):
-        return key[(p*len(key)) / FuzzyDict.PARTS:
-            ((p+1)*len(key)) / FuzzyDict.PARTS]
+        return key[(p * len(key)) / FuzzyDict.PARTS:
+                   ((p + 1) * len(key)) / FuzzyDict.PARTS]
 
-#Note: This dictionary takes space proportional to the number of keys
-#ever inserted, not the number of keys actually existing in the dictionary.
+# Note: This dictionary takes space proportional to the number of keys
+# ever inserted, not the number of keys actually existing in the dictionary.
 
 doctest.testmod()

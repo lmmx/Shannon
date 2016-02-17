@@ -1,5 +1,6 @@
 _end = '_end_'
 
+
 def make_trie(words):
     root = dict()
     for word in words:
@@ -8,6 +9,7 @@ def make_trie(words):
             current_dict = current_dict.setdefault(letter, {})
         current_dict.setdefault(_end, _end)
     return root
+
 
 def in_trie(trie, word):
     current_dict = trie

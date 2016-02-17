@@ -1,5 +1,7 @@
-import time, sys
+import time
+import sys
 from mbgraph import *
+
 
 def extract_reads(filename, weighted):
     """Extract all reads from fasta file FILENAME
@@ -19,21 +21,24 @@ def extract_reads(filename, weighted):
                 reads.append((last_weight, line[:-1].upper()))
     return reads
 
+
 def load_reads(filename, double_stranded, weighted):
     """Load FASTA reads.
     """
     log("Loading reads.")
     for read in extract_reads(filename, weighted):
         Read.add_read(read, double_stranded)
+
+
 def load_mated_reads(file_1, file_2, double_stranded):
-    #Does not allow weighted reads.
+    # Does not allow weighted reads.
     def pair(r1, r2):
         r1.mate_pair = 1
         r2.mate_pair = 2
         r1.mate = r2
         r2.mate = r1
 
-    #There must be a newline at the end of the file!
+    # There must be a newline at the end of the file!
     log("Loading mated reads.")
     Read.MATED_READS = True
     with open(file_1) as f1, open(file_2) as f2:
@@ -42,7 +47,8 @@ def load_mated_reads(file_1, file_2, double_stranded):
         for line1 in gen1:
             line2 = next(gen2)
             r1 = Read.add_read((1.0, line1), double_stranded)
-            r2 = Read.add_read((1.0, Read.reverse_complement(line2)), double_stranded)
+            r2 = Read.add_read(
+                (1.0, Read.reverse_complement(line2)), double_stranded)
 
             if double_stranded:
                 r1a, r1b = r1
@@ -51,6 +57,7 @@ def load_mated_reads(file_1, file_2, double_stranded):
                 pair(r2b, r1b)
             else:
                 pair(r1, r2)
+
 
 def load_cpp(node_file, edge_file):
     """Loads condensed files from C++ implementation.
@@ -72,6 +79,8 @@ def load_cpp(node_file, edge_file):
             id1, id2 = line.split()
             weight = Read.K - 1
             nodes[id1].link_to(nodes[id2], int(weight))
+
+
 def load_jellyfish(node_file, edge_file):
     """Loads condensed files from Jellyfish.
     """
@@ -93,6 +102,7 @@ def load_jellyfish(node_file, edge_file):
             e = nodes[k1].link_to(nodes[k2], int(weight))
             e.copy_count = round(float(prevalence))
 
+
 def setup(read_file):
     """Perform some setup functions.
     """
@@ -102,10 +112,12 @@ def setup(read_file):
     Node.SIZE_THRESHOLD = Read.L
     clear()
 
+
 def log(text):
     print("%s: %s" % (time.asctime(), text))
 
-def run(output_dir, error_correction = False, compute_fringes = False):
+
+def run(output_dir, error_correction=False, compute_fringes=False):
     """Continues the algorithm starting with condensing, writing the results to OUTPUT_DIR.
     """
     log("Condensing.")
@@ -139,24 +151,25 @@ def run(output_dir, error_correction = False, compute_fringes = False):
     known_paths()
     Read.find_mate_pairs()
 
-    #construct_reads()
+    # construct_reads()
     #log("Rebridging graph.")
-    #Read.find_bridging_reads()
-    #Node.bridge_all()
-    #Node.condense_all()
+    # Read.find_bridging_reads()
+    # Node.bridge_all()
+    # Node.condense_all()
 
     #log("Finding copy counts.")
-    #Node.find_approximate_copy_counts()
-    #Node.disregard_loops()
+    # Node.find_approximate_copy_counts()
+    # Node.disregard_loops()
     #log("Finding known paths.")
-    #known_paths()
-    #Read.find_mate_pairs()
+    # known_paths()
+    # Read.find_mate_pairs()
 
     log(str(len(Node.nodes)) + " final nodes.")
     log("Exporting graph.")
 
     output_components(output_dir)
     log("Done.")
+
 
 def output_components(output_dir):
     """Outputs a textual representation of the graph as components, one
@@ -178,9 +191,9 @@ def output_components(output_dir):
         for source_node in Node.nodes:
             if hasattr(source_node, 'destroyed'):
                 continue
-            with open(output_dir + '/nodes'+str(component)+'.txt', 'w', 0) as nodefile, \
-                open(output_dir + '/edges'+str(component)+'.txt', 'w', 0) as edgefile, \
-                open(output_dir + '/paths'+str(component)+'.txt', 'w', 0) as pathfile:
+            with open(output_dir + '/nodes' + str(component) + '.txt', 'w', 0) as nodefile, \
+                    open(output_dir + '/edges' + str(component) + '.txt', 'w', 0) as edgefile, \
+                    open(output_dir + '/paths' + str(component) + '.txt', 'w', 0) as pathfile:
                 component_nodes, component_edges = source_node.add_component()
                 component_nodes = Node.topological_sort(component_nodes)
 
@@ -200,17 +213,20 @@ def output_components(output_dir):
                     node.destroyed = True
 
                 for node in component_nodes:
-                    if node not in paths_by_start: continue
+                    if node not in paths_by_start:
+                        continue
                     paths = paths_by_start[node]
                     for path in paths_by_start[node]:
                         path = [str(n.hash) for n in path]
                         pathfile.write("\t".join(path) + "\n")
 
-                edgefile.write("InID\tOutID\tWeight\tCopycount\tNormalization\n")
+                edgefile.write(
+                    "InID\tOutID\tWeight\tCopycount\tNormalization\n")
                 for edge in component_edges:
                     edgefile.write(edge.to_string())
-                
+
                 component += 1
+
 
 def main():
     sys.setrecursionlimit(10000)
