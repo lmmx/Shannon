@@ -21,4 +21,4 @@ def is_number(s):
         float(s)
         return True
     except ValueError:
-	return False
+        return False
