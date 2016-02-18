@@ -69,12 +69,14 @@ def test_install():
     print('--------------------------------------------')
     if test_suite.which(python_path):
         print('Using Python (2.7+) in ' + test_suite.which(python_path))
-        vmaj = subprocess.check_output([python_path, '-c', 'import sys; sys.stdout.write(str(sys.version_info.major))'])
+        vmaj = subprocess.check_output(
+            [python_path, '-c', 'import sys; sys.stdout.write(str(sys.version_info.major))'])
         if int(vmaj) != 2:
             print('ERROR: System Python version does not seem to be version 2.7.0 or greater. Please change the python_path varible in shannon.py to the Python 2.7 path')
             exit_now = True
         else:
-            vmin = subprocess.check_output([python_path, '-c', 'import sys; sys.stdout.write(str(sys.version_info.minor))'])
+            vmin = subprocess.check_output(
+                [python_path, '-c', 'import sys; sys.stdout.write(str(sys.version_info.minor))'])
             if int(vmin) < 7:
                 print('ERROR: System Python 2 version does not seem to be 2.7.0 or greater. Please change the python_path varible in shannon.py to the Python 2.7 path.')
                 exit_now = True

@@ -162,7 +162,10 @@ if generate_reads:
         '.fa')
 
     if paired_end:
-        run_cmd(python_path + ' ./Read_Simulator/splitfasta_file.py -o ' + reads_file)
+        run_cmd(
+            python_path +
+            ' ./Read_Simulator/splitfasta_file.py -o ' +
+            reads_file)
         run_cmd(
             'awk \'/^>/{print s? s"\\n"$0:$0;s="";next}{s=s sprintf("%s",$0)}END{if(s)print s}\' ' +
             reads_file +
