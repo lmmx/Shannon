@@ -23,7 +23,6 @@ class Counter():
     def increment(self):
         self.count += 1
         if self.count % self.report_length == 0:
-            print sys.version
             print "{:s}:, processed ".format(time.asctime())
 
 
