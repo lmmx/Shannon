@@ -4,6 +4,7 @@ import sys
 import time
 import os.path
 import tester
+print sys.version
 #from set_exp import set_exp
 #from filter_trans import filter_trans
 # This script is used to call all the the steps of the algorithm.
@@ -149,11 +150,19 @@ if not os.path.exists(sample_output_name + 'intermediate'):
 if generate_reads:
     if to_set_exp:
         set_exp(start_loc, stop_loc, sparsity, 'loguniform', sample_name)
-    run_cmd('python ./Read_Simulator/getseqfrombed.py ' + err_string +
-            reads_file + '.bed ' + ref_file + ' > ' + reads_file + '.fa')
+    run_cmd(
+        python_path +
+        ' ./Read_Simulator/getseqfrombed.py ' +
+        err_string +
+        reads_file +
+        '.bed ' +
+        ref_file +
+        ' > ' +
+        reads_file +
+        '.fa')
 
     if paired_end:
-        run_cmd('python ./Read_Simulator/splitfasta_file.py -o ' + reads_file)
+        run_cmd(python_path + ' ./Read_Simulator/splitfasta_file.py -o ' + reads_file)
         run_cmd(
             'awk \'/^>/{print s? s"\\n"$0:$0;s="";next}{s=s sprintf("%s",$0)}END{if(s)print s}\' ' +
             reads_file +
@@ -278,7 +287,8 @@ if run_extension_corr:
     else:
         str_ec = ' '
     run_cmd(
-        'python extension_correction_SIC.py ' +
+        python_path +
+        ' extension_correction_SIC.py ' +
         str_ec +
         sample_name +
         'algo_input/k1mer.dict_org ' +
@@ -287,7 +297,8 @@ if run_extension_corr:
 
 if run_jellyfish or run_extension_corr:
     run_cmd(
-        'python kp1mer_to_kmer.py ' +
+        python_path +
+        ' kp1mer_to_kmer.py ' +
         sample_name +
         'algo_input/k1mer.dict ' +
         sample_name +
@@ -339,7 +350,8 @@ if mb:
             sample_name + 'algo_input/edges.txt '
     if not paired_end:
         run_cmd(
-            'python ' +
+            python_path +
+            ' ' +
             shannon_dir +
             'multibridging.py -f ' +
             mb_string +
@@ -354,7 +366,8 @@ if mb:
             '_terminal_output.txt')  # ' 2>&1 | tee ./' + sample_name + 'algo_input/log.txt')
     else:
         run_cmd(
-            'python ' +
+            python_path +
+            ' ' +
             shannon_dir +
             'multibridging.py -f ' +
             mb_string +
@@ -380,7 +393,8 @@ if sparse_flow:
     #run_cmd('rm '+sample_output_name+'algo_output/reconstructed.fasta')
 
     run_cmd(
-        'python ' +
+        python_path +
+        ' ' +
         shannon_dir +
         'algorithm_SF.py -1 ' +
         sample_output_name)
@@ -397,7 +411,8 @@ if sparse_flow:
         print('Component:', ncomp)
         if not parallelize_sf:
             os.system(
-                'python ' +
+                python_path +
+                ' ' +
                 shannon_dir +
                 'algorithm_SF.py ' +
                 str(ncomp) +
@@ -413,7 +428,9 @@ if sparse_flow:
 
     if parallelize_sf:
         os.system(
-            'parallel python ' +
+            'parallel ' +
+            python_path +
+            ' ' +
             shannon_dir +
             'algorithm_SF.py {} ' +
             sample_output_name +
@@ -494,7 +511,8 @@ if compare_ans:
             N)
     else:
         run_cmd(
-            'python ' +
+            python_path +
+            ' ' +
             shannon_dir +
             'parallel_blat.py ' +
             reconstr +
@@ -564,7 +582,8 @@ if compare_trinity:
             N)
     else:
         run_cmd(
-            'python ' +
+            python_path +
+            ' ' +
             shannon_dir +
             'parallel_blat.py ' +
             trinity_fasta +
@@ -611,7 +630,8 @@ if run_cuffinks:
 
 if compare_cufflinks:
     run_cmd(
-        'python parallel_blat.py ' +
+        python_path +
+        ' parallel_blat.py ' +
         cufflinks_fasta +
         ' ' +
         curr_ref +
@@ -640,7 +660,8 @@ if compare_soap:
 
 if compare_soap:
     run_cmd(
-        'python parallel_blat.py ' +
+        python_path +
+        ' parallel_blat.py ' +
         soap_fasta +
         ' ' +
         curr_ref +
@@ -664,7 +685,8 @@ if compare_oasis:
 
 if compare_oasis:
     run_cmd(
-        'python parallel_blat.py ' +
+        python_path +
+        ' parallel_blat.py ' +
         oasis_fasta +
         ' ' +
         curr_ref +
@@ -688,7 +710,8 @@ if compare_trans:
 
 if compare_trans:
     run_cmd(
-        'python parallel_blat.py ' +
+        python_path +
+        ' parallel_blat.py ' +
         trans_fasta +
         ' ' +
         curr_ref +

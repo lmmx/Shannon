@@ -17,6 +17,7 @@ from process_concatenated_fasta import process_concatenated_fasta
 
 # Set Paths
 shannon_dir = os.path.dirname(os.path.abspath(sys.argv[0])) + '/'
+python_path = 'python2.7'
 gpmetis_path = 'gpmetis'
 jellyfish_path = 'jellyfish'
 gnu_parallel_path = 'parallel'
@@ -66,6 +67,20 @@ def test_install():
     exit_now = False
     print('Checking the various dependencies')
     print('--------------------------------------------')
+    if test_suite.which(python_path):
+        print('Using Python (2.7+) in ' + test_suite.which(python_path))
+        vmaj = subprocess.check_output([python_path, '-c', 'import sys; sys.stdout.write(str(sys.version_info.major))'])
+        if int(vmaj) != 2:
+            print('ERROR: System Python version does not seem to be version 2.7.0 or greater. Please change the python_path varible in shannon.py to the Python 2.7 path')
+            exit_now = True
+        else:
+            vmin = subprocess.check_output([python_path, '-c', 'import sys; sys.stdout.write(str(sys.version_info.minor))'])
+            if int(vmin) < 7:
+                print('ERROR: System Python 2 version does not seem to be 2.7.0 or greater. Please change the python_path varible in shannon.py to the Python 2.7 path.')
+                exit_now = True
+    else:
+        print('ERROR: Python 2.7 not found. Set variable python_path correctly')
+        exit_now = True
     if test_suite.which(jellyfish_path):
         print('Using jellyfish in ' + test_suite.which(jellyfish_path))
         a = subprocess.check_output([jellyfish_path, '--version'])
@@ -189,7 +204,7 @@ else:
 		print fin.read()'''
 
 if exit_now:
-    print('Try running python shannon.py --help for a short manual')
+    print('Try running python2.7 shannon.py --help for a short manual')
     sys.exit()
 else:
     print('--------------------------------------------')
@@ -243,7 +258,8 @@ run_cmd('mkdir ' + sample_name_input + "algo_input")
 if run_quorum:
     print "{:s}: Running Quorum for read error correction with quality scores..".format(time.asctime())
     run_cmd(
-        'python ' +
+        python_path +
+        ' ' +
         shannon_dir +
         'run_quorum.py ' +
         quorum_path +
@@ -315,7 +331,8 @@ if run_extension_corr:
     else:
         str_ec = ' '
     run_cmd(
-        'python ' +
+        python_path +
+        ' ' +
         shannon_dir +
         'extension_correction.py ' +
         str_ec +
@@ -334,7 +351,8 @@ if run_extension_corr:
 # Gets kmers from k1mers
 if run_jellyfish or run_extension_corr:
     run_cmd(
-        'python ' +
+        python_path +
+        ' ' +
         shannon_dir +
         'kp1mer_to_kmer.py ' +
         sample_name_input +
@@ -573,7 +591,9 @@ if run_parallel:
         gnu_parallel_path +
         " -j " +
         str(nJobs) +
-        " python " +
+        " " +
+        python_path +
+        " " +
         shannon_dir +
         "run_MB_SF.py {} --run_alg " +
         ds_string +
@@ -590,7 +610,8 @@ if run_parallel:
 else:
     for param_str in main_server_parameter_string.split():
         run_cmd(
-            "python " +
+            python_path +
+            " " +
             shannon_dir +
             "run_MB_SF.py " +
             param_str +
@@ -654,7 +675,8 @@ run_cmd(
     "/reconstructed_sorted.fasta ")
 
 run_cmd(
-    'python ' +
+    python_path +
+    ' ' +
     shannon_dir +
     'fast_reps.py -d ' +
     dir_out +
@@ -667,7 +689,8 @@ run_cmd(
 if compare_ans:
     run_cmd("cp " + ref_file + ' ' + dir_out + "/reference.fasta")
     run_cmd(
-        "python " +
+        python_path +
+        " " +
         shannon_dir +
         "run_MB_SF.py " +
         dir_base +
