@@ -605,6 +605,8 @@ if run_parallel:
         paired_end_flag +
         " --dir_name " +
         comp_directory_name +
+        " --python_path " +
+        python_path +
         " --shannon-dir " +
         shannon_dir +
         " ::: " +
@@ -625,6 +627,8 @@ else:
             paired_end_flag +
             " --dir_name " +
             comp_directory_name +
+            " --python_path " +
+            python_path +
             " " +
             param_str +
             " --shannon-dir " +
@@ -696,7 +700,9 @@ if compare_ans:
         shannon_dir +
         "run_MB_SF.py " +
         dir_base +
-        " --compare ")
+        " --compare " +
+        " --python_path " +
+        python_path)
 
 # updates log
 if os.path.exists(comp_directory_name + "/before_sp_log.txt"):

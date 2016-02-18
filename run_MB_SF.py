@@ -4,7 +4,6 @@ import sys
 import time
 import os.path
 import tester
-print sys.version
 #from set_exp import set_exp
 #from filter_trans import filter_trans
 # This script is used to call all the the steps of the algorithm.
@@ -77,6 +76,11 @@ sample_name = None
 n_inp = sys.argv
 if len(n_inp) > 1:
     sample_name = sys.argv[1]
+    if '--python_path' in n_inp:
+        python_path = n_inp[n_inp.index('--python_path') + 1]
+    else:
+        print('ERROR: Python 2.7 path not provided to run_MB_SF.py. Ensure --python_path flag is being passed correctly')
+        exit_now = True
     if '--run_alg' in n_inp:
         mb = 1
         sparse_flow = 1
